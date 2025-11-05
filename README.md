@@ -23,7 +23,7 @@ A minimal but production-minded backend providing:
 
 - Node.js (LTS)
 - Express
-- MongoDB (Mongoose)
+- mysql/sequelize
 - bcrypt
 - jsonwebtoken
 - nodemailer

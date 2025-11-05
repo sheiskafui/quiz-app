@@ -1,39 +1,68 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import sequelize from "../config/db.js";
+import { DataTypes } from "sequelize";
+import bcrypt from "bcrypt";
 
-const userSchema = new mongoose.Schema({
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true, 
-    lowercase: true, 
-    trim: true },
-  password: { 
-    type: String, 
-    required: true },
-  verified: { 
-    type: Boolean, 
-    default: false },
-  verificationToken: { 
-    type: String },
-  refreshToken: { 
-    type: String },
-  role: { 
-    type: String, 
-    enum: ['user', 'admin'], 
-    default: 'user' }
-}, { timestamps: true });
 
-// Hash password before it is saved
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
-  this.password = await bcrypt.hash(this.password, 10);
-});
+const User = sequelize.define(
+  "User",
+  {
+    user_uuid: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  },
+  {
+    timestamps: true,
+    hooks: {
+      beforeCreate: async (user) => {
+        user.user_name = user.user_name.toLowerCase();
+        user.email = user.email.toLowerCase();
+        if (user.password) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed("user_name")) {
+          user.user_name = user.user_name.toLowerCase();
+        }
+        if (user.changed("email")) {
+          user.email = user.email.toLowerCase();
+        }
+        if (user.password) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
+    },
+    indexes: [
+      {
+        unique: true,
+        fields: ["user_uuid"],
+      },
+      {
+        unique: true,
+        fields: ["user_name"],
+      },
+      {
+        unique: true,
+        fields: ["email"],
+      },
+    ],
+  }
+);
 
-// method to compare password
-userSchema.methods.comparePassword = function (candidate) {
-  return bcrypt.compare(candidate, this.password);
+User.prototype.verifyPassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
 };
 
-const User = mongoose.models.User || mongoose.model('User', userSchema);
 export default User;
