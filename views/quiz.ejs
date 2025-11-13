@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Take Quiz</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="quiz-container">
+      <div id="quizHeader"></div>
+      <div id="quizContent"></div>
+      <div id="result" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('accessToken');
+    if (!token) window.location.href = '/login';
+
+    const quizId = window.location.pathname.split('/')[2];
+    let quiz = null;
+    let answers = {};
+
+    async function loadQuiz() {
+      try {
+        const res = await fetch(`/api/quizzes/${quizId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        quiz = await res.json();
+        
+        document.getElementById('quizHeader').innerHTML = `
+          <h1>${quiz.title}</h1>
+          <p>${quiz.description}</p>
+        `;
+
+        const content = quiz.questions.map((q, i) => `
+          <div class="question-card">
+            <h3>Question ${i + 1}</h3>
+            <p>${q.questionText}</p>
+            <div class="options">
+              ${q.options.map((opt, idx) => `
+                <label>
+                  <input type="radio" name="q${q.question_uuid}" value="${idx}">
+                  ${opt}
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('quizContent').innerHTML = content + 
+          '<button onclick="submitQuiz()" class="btn btn-primary">Submit Quiz</button>';
+      } catch (err) {
+        alert('Failed to load quiz');
+      }
+    }
+
+    async function submitQuiz() {
+      quiz.questions.forEach(q => {
+        const selected = document.querySelector(`input[name="q${q.question_uuid}"]:checked`);
+        if (selected) answers[q.question_uuid] = parseInt(selected.value);
+      });
+
+      try {
+        const res = await fetch('/api/quizzes/submit', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ quizId, answers })
+        });
+        const result = await res.json();
+        
+        document.getElementById('quizContent').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('result').innerHTML = `
+          <div class="result-card">
+            <h2>Quiz Completed!</h2>
+            <p>Your Score: ${result.score} / ${result.totalQuestions}</p>
+            <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+          </div>
+        `;
+      } catch (err) {
+        alert('Failed to submit quiz');
+      }
+    }
+
+    loadQuiz();
+  </script>
+</body>
+</html>

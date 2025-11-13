@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Quiz App</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <nav class="navbar">
+      <h2>Quiz Dashboard</h2>
+      <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+    </nav>
+
+    <div class="dashboard-content">
+      <h1>Available Quizzes</h1>
+      <div id="quizList" class="quiz-grid"></div>
+      <div id="message"></div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('accessToken');
+    if (!token) window.location.href = '/login';
+
+    async function loadQuizzes() {
+      try {
+        const res = await fetch('/api/quizzes', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const quizzes = await res.json();
+        
+        const quizList = document.getElementById('quizList');
+        if (quizzes.length === 0) {
+          quizList.innerHTML = '<p>No quizzes available yet.</p>';
+          return;
+        }
+
+        quizList.innerHTML = quizzes.map(quiz => `
+          <div class="quiz-card">
+            <h3>${quiz.title}</h3>
+            <p>${quiz.description || 'No description'}</p>
+            <p><strong>Difficulty:</strong> ${quiz.difficulty}</p>
+            <p><strong>Questions:</strong> ${quiz.questions?.length || 0}</p>
+            <a href="/quiz/${quiz.quiz_uuid}" class="btn btn-primary">Start Quiz</a>
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('message').innerHTML = '<p class="error">Failed to load quizzes</p>';
+      }
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      localStorage.clear();
+      window.location.href = '/';
+    });
+
+    loadQuizzes();
+  </script>
+</body>
+</html>
