@@ -1,6 +1,6 @@
-# Quiz App — Backend (Node.js + Express + MongoDB)
+# Quiz App — Backend (Node.js + Express + MySQL)
 
-A modern, secure backend for a quiz application built with Node.js, Express, and MongoDB (Mongoose). Focused on email-based authentication, email verification, access and refresh tokens, protected routes, and a foundation for quiz management.
+A modern, secure backend for a quiz application built with Node.js, Express, and MySQL (Sequelize). Focused on email-based authentication, email verification, access and refresh tokens, protected routes, and a foundation for quiz management.
 
 ## Project overview
 A minimal but production-minded backend providing:
@@ -15,9 +15,9 @@ A minimal but production-minded backend providing:
 
 - Authentication: register, login, email verify, refresh, logout
 - Security: bcrypt password hashing, JWT tokens, verification tokens
-- Persistence: MongoDB via Mongoose
+- Persistence: MySQL via Sequelize
 - Email: verification emails (nodemailer)
-- Extensible structure: controllers, routes, models, middleware, utils
+- Extensible structure: controllers, routes, models, middleware, utils, config, public, views
 
 ## Tech Stack
 
